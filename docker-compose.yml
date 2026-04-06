@@ -1,0 +1,27 @@
+version: '3.8'
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MYSQL_ROOT_PASSWORD: clouddory
+      MYSQL_DATABASE: clouddory
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: mysql://root:clouddory@db:3306/clouddory
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: change-this-to-a-random-string
+    depends_on:
+      - db
+
+volumes:
+  db_data:

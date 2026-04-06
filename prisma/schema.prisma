@@ -1,0 +1,769 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?   @map("password_hash")
+  name          String
+  image         String?   @map("avatar_url")
+  emailVerified DateTime? @map("email_verified_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  accounts        Account[]
+  sessions        Session[]
+  orgMembers      OrgMember[]
+  invitationsSent Invitation[]   @relation("InvitedBy")
+  savedQueries    SavedQuery[]
+  notifications   Notification[]
+  bookmarks       Bookmark[]
+  apiKeys         ApiKey[]
+
+  feedbacks       Feedback[]
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Organization {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  plan         String   @default("starter")
+  companySize  String?  @map("company_size")
+  billingEmail String?  @map("billing_email")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  members          OrgMember[]
+  invitations      Invitation[]
+  cloudAccounts    CloudAccount[]
+  costRecords      CostRecord[]
+  settings         OrgSetting[]
+  aiTags           AiTag[]
+  connectors       Connector[]
+  manualEntries    ManualEntry[]
+  dashboards       Dashboard[]
+  spendPlans       SpendPlan[]
+  savedQueries     SavedQuery[]
+  wasteScanResults WasteScanResult[]
+  commitments      Commitment[]
+  notifications    Notification[]
+  bookmarks        Bookmark[]
+  apiKeys          ApiKey[]
+  labelPolicies    LabelPolicy[]
+  anomalies        Anomaly[]
+  scheduledDigests ScheduledDigest[]
+  showbacks        Showback[]
+  accountabilityIntegrations AccountabilityIntegration[]
+  accountabilityEvents       AccountabilityEvent[]
+  costCenters      CostCenter[]
+  alertRoutes      AlertRoute[]
+  groupingProfiles GroupingProfile[]
+  volumeDiscounts  VolumeDiscount[]
+  allowedNetworks  AllowedNetwork[]
+  ssoConfigs       SsoConfig[]
+
+  feedbacks     Feedback[]
+  cveTracking   OrgCveTracking[]
+  @@map("organizations")
+}
+
+model OrgMember {
+  id       String   @id @default(cuid())
+  orgId    String   @map("org_id")
+  userId   String   @map("user_id")
+  role     String   @default("member")
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+  @@index([orgId])
+  @@index([userId])
+  @@map("org_members")
+}
+
+model Invitation {
+  id         String    @id @default(cuid())
+  orgId      String    @map("org_id")
+  email      String
+  role       String    @default("member")
+  token      String    @unique
+  invitedBy  String    @map("invited_by")
+  expiresAt  DateTime  @map("expires_at")
+  acceptedAt DateTime? @map("accepted_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  inviter User         @relation("InvitedBy", fields: [invitedBy], references: [id])
+
+  @@index([orgId])
+  @@map("invitations")
+}
+
+model CloudAccount {
+  id                String    @id @default(cuid())
+  orgId             String    @map("org_id")
+  provider          String
+  name              String
+  credentialsEnc    String    @map("credentials_enc") @db.Text
+  externalId        String?   @map("external_id")
+  status            String    @default("active")
+  lastSyncAt        DateTime? @map("last_sync_at")
+  lastError         String?   @map("last_error") @db.Text
+  syncIntervalHours Int       @default(6) @map("sync_interval_hours")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  costRecords CostRecord[]
+
+  @@index([orgId])
+  @@map("cloud_accounts")
+}
+
+model OrgSetting {
+  id           String  @id @default(cuid())
+  orgId        String  @map("org_id")
+  settingKey   String  @map("setting_key")
+  settingValue String? @map("setting_value") @db.Text
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, settingKey])
+  @@map("org_settings")
+}
+
+model AiTag {
+  id           String   @id @default(cuid())
+  orgId        String   @map("org_id")
+  name         String // e.g., "Team", "Environment", "Application"
+  description  String?  @db.Text
+  tagType      String   @default("custom") @map("tag_type") // custom, ai_powered, relational
+  defaultValue String   @default("Unallocated") @map("default_value")
+  isActive     Boolean  @default(true) @map("is_active")
+  priority     Int      @default(0) // for ordering
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  rules AiTagRule[]
+
+  @@unique([orgId, name])
+  @@index([orgId])
+  @@map("aitags")
+}
+
+model AiTagRule {
+  id        String   @id @default(cuid())
+  aiTagId   String   @map("aitag_id")
+  valueName String   @map("value_name") // e.g., "Platform Engineering", "Production"
+  priority  Int      @default(0) // higher = evaluated first
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  aiTag      AiTag            @relation(fields: [aiTagId], references: [id], onDelete: Cascade)
+  conditions AiTagCondition[]
+
+  @@index([aiTagId])
+  @@map("aitag_rules")
+}
+
+model AiTagCondition {
+  id        String @id @default(cuid())
+  ruleId    String @map("rule_id")
+  dimension String // provider, service, region, account, tag_key, tag_value, resource_name, resource_type
+  operator  String // equals, not_equals, contains, starts_with, regex
+  value     String
+  logicOp   String @default("AND") @map("logic_op") // AND, OR (how this condition relates to previous)
+
+  rule AiTagRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId])
+  @@map("aitag_conditions")
+}
+
+model CostRecord {
+  id             String   @id @default(cuid())
+  orgId          String   @map("org_id")
+  cloudAccountId String?  @map("cloud_account_id")
+  date           DateTime @db.Date
+  service        String
+  region         String?
+  resourceId     String?  @map("resource_id")
+  resourceType   String?  @map("resource_type")
+  cost           Decimal  @db.Decimal(12, 4)
+  currency       String   @default("USD")
+  tags           Json?
+  source         String   @default("aws") // aws, gcp, azure, datadog, kubernetes, snowflake, openai, anthropic, manual
+  team           String?
+  environment    String? // production, staging, development, sandbox
+  usage          Decimal? @db.Decimal(16, 4)
+  usageUnit      String?  @map("usage_unit") // hours, GB, requests, tokens
+  tokenCount     Int?     @map("token_count")
+  model          String?
+  requestCount   Int?     @map("request_count")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  org          Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  cloudAccount CloudAccount? @relation(fields: [cloudAccountId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, date])
+  @@index([orgId, service])
+  @@index([cloudAccountId, date])
+  @@map("cost_records")
+}
+
+model Connector {
+  id           String    @id @default(cuid())
+  orgId        String    @map("org_id")
+  name         String
+  providerType String    @map("provider_type") // aws, gcp, azure, oci, openai, anthropic, datadog, snowflake, databricks, kubernetes, slack, jira, servicenow, teams
+  status       String    @default("pending") // connected, error, pending, disconnected
+  lastSyncedAt DateTime? @map("last_synced_at")
+  config       Json?
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("connectors")
+}
+
+model ManualEntry {
+  id          String   @id @default(cuid())
+  orgId       String   @map("org_id")
+  name        String
+  provider    String
+  service     String
+  cost        Decimal  @db.Decimal(12, 4)
+  date        DateTime @db.Date
+  team        String?
+  environment String?
+  notes       String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("manual_entries")
+}
+
+model Dashboard {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  name      String
+  isDefault Boolean  @default(false) @map("is_default")
+  layout    Json?
+  widgets   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("dashboards")
+}
+
+model SpendPlan {
+  id         String   @id @default(cuid())
+  orgId      String   @map("org_id")
+  name       String
+  fiscalYear Int      @map("fiscal_year")
+  budgets    Json
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("spend_plans")
+}
+
+model SavedQuery {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  userId    String   @map("user_id")
+  name      String
+  config    Json
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("saved_queries")
+}
+
+model WasteScanResult {
+  id               String   @id @default(cuid())
+  orgId            String   @map("org_id")
+  scanType         String   @map("scan_type") // idle_resources, rightsizing, unused_commitments, orphaned_storage, oversized_instances
+  resourceId       String   @map("resource_id")
+  provider         String
+  service          String
+  region           String?
+  monthlyWasteCost Decimal  @map("monthly_waste_cost") @db.Decimal(12, 4)
+  recommendation   String   @db.Text
+  severity         String // low, medium, high, critical
+  status           String   @default("open") // open, dismissed, resolved
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([orgId, status])
+  @@map("waste_scan_results")
+}
+
+model Commitment {
+  id             String   @id @default(cuid())
+  orgId          String   @map("org_id")
+  provider       String
+  commitmentType String   @map("commitment_type") // ri, savings_plan, cud
+  service        String
+  region         String?
+  term           String // 1yr, 3yr
+  startDate      DateTime @map("start_date") @db.Date
+  endDate        DateTime @map("end_date") @db.Date
+  totalCost      Decimal  @map("total_cost") @db.Decimal(12, 4)
+  usedCost       Decimal  @map("used_cost") @db.Decimal(12, 4)
+  coveragePct    Decimal  @map("coverage_pct") @db.Decimal(5, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("commitments")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  userId    String?  @map("user_id")
+  type      String // anomaly, budget_breach, waste_found, policy_violation
+  title     String
+  body      String   @db.Text
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User?        @relation(fields: [userId], references: [id])
+
+  @@index([orgId])
+  @@index([userId, read])
+  @@map("notifications")
+}
+
+model Bookmark {
+  id          String   @id @default(cuid())
+  orgId       String   @map("org_id")
+  userId      String   @map("user_id")
+  name        String
+  page        String
+  filterState Json     @map("filter_state")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([userId])
+  @@map("bookmarks")
+}
+
+model ApiKey {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  orgId     String    @map("org_id")
+  name      String
+  keyHash   String    @map("key_hash")
+  lastUsed  DateTime? @map("last_used")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([keyHash])
+  @@map("api_keys")
+}
+
+model LabelPolicy {
+  id           String   @id @default(cuid())
+  orgId        String   @map("org_id")
+  name         String
+  requiredTags Json     @map("required_tags")
+  scopeFilter  Json?    @map("scope_filter")
+  enforcement  String   @default("warn") // warn, block
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  org        Organization      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  violations PolicyViolation[]
+
+  @@index([orgId])
+  @@map("label_policies")
+}
+
+model PolicyViolation {
+  id          String   @id @default(cuid())
+  policyId    String   @map("policy_id")
+  resourceId  String   @map("resource_id")
+  provider    String
+  missingTags Json     @map("missing_tags")
+  status      String   @default("open") // open, resolved, exempted
+  detectedAt  DateTime @default(now()) @map("detected_at")
+
+  policy LabelPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@index([policyId])
+  @@map("policy_violations")
+}
+
+model Anomaly {
+  id           String   @id @default(cuid())
+  orgId        String   @map("org_id")
+  resourceId   String   @map("resource_id")
+  provider     String
+  service      String
+  team         String?
+  region       String?
+  expectedCost Decimal  @map("expected_cost") @db.Decimal(12, 4)
+  actualCost   Decimal  @map("actual_cost") @db.Decimal(12, 4)
+  deviationPct Decimal  @map("deviation_pct") @db.Decimal(7, 2)
+  severity     String // low, medium, high, critical
+  status       String   @default("open") // open, acknowledged, resolved
+  detectedAt   DateTime @default(now()) @map("detected_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([orgId, status])
+  @@map("anomalies")
+}
+
+model ScheduledDigest {
+  id          String   @id @default(cuid())
+  orgId       String   @map("org_id")
+  name        String
+  dashboardId String?  @map("dashboard_id")
+  frequency   String   @default("weekly") // daily, weekly, monthly
+  channels    Json     // { email?: string[], slackWebhook?: string }
+  enabled     Boolean  @default(true)
+  nextSendAt  DateTime? @map("next_send_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("scheduled_digests")
+}
+
+model Showback {
+  id         String   @id @default(cuid())
+  orgId      String   @map("org_id")
+  team       String
+  token      String   @unique
+  dimensions Json?    // allowed dimensions
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("showbacks")
+}
+
+model AccountabilityIntegration {
+  id           String   @id @default(cuid())
+  orgId        String   @map("org_id")
+  platform     String   // jira, servicenow, slack, teams
+  status       String   @default("connected") // connected, disconnected
+  config       Json?
+  triggers     Json?    // ["anomaly_detected","budget_breach","waste_found"]
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("accountability_integrations")
+}
+
+model AccountabilityEvent {
+  id            String   @id @default(cuid())
+  orgId         String   @map("org_id")
+  triggerType   String   @map("trigger_type") // anomaly_detected, budget_breach, waste_found
+  destination   String   // jira, servicenow, slack, teams
+  status        String   @default("sent") // sent, failed
+  payload       Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("accountability_events")
+}
+
+model CostCenter {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  parentId  String?  @map("parent_id")
+  name      String
+  ownerEmail String? @map("owner_email")
+  budget    Decimal? @db.Decimal(12, 4)
+  tagCount  Int      @default(0) @map("tag_count")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  parent   CostCenter?  @relation("CostCenterTree", fields: [parentId], references: [id])
+  children CostCenter[] @relation("CostCenterTree")
+
+  @@index([orgId])
+  @@map("cost_centers")
+}
+
+model AlertRoute {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  name      String
+  type      String   // slack, email, webhook
+  config    Json     // { email?: string, webhookUrl?: string }
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("alert_routes")
+}
+
+model GroupingProfile {
+  id         String   @id @default(cuid())
+  orgId      String   @map("org_id")
+  name       String
+  dimensions Json     // ["provider","service","team","env","region","source"]
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("grouping_profiles")
+}
+
+model VolumeDiscount {
+  id              String   @id @default(cuid())
+  orgId           String   @map("org_id")
+  provider        String
+  discountPct     Decimal  @map("discount_pct") @db.Decimal(5, 2)
+  committedAmount Decimal  @map("committed_amount") @db.Decimal(14, 2)
+  startDate       DateTime @map("start_date") @db.Date
+  endDate         DateTime @map("end_date") @db.Date
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("volume_discounts")
+}
+
+model AllowedNetwork {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  cidr      String
+  label     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@map("allowed_networks")
+}
+
+model SsoConfig {
+  id          String   @id @default(cuid())
+  orgId       String   @map("org_id")
+  provider    String   // okta, google_workspace, azure_ad
+  entityId    String?  @map("entity_id")
+  ssoUrl      String?  @map("sso_url")
+  certificate String?  @db.Text
+  enabled     Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  org Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, provider])
+  @@index([orgId])
+  @@map("sso_configs")
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  orgId     String   @map("org_id")
+  userId    String   @map("user_id")
+  userName  String   @map("user_name")
+  userEmail String   @map("user_email")
+  page      String
+  pageUrl   String   @map("page_url")
+  type      String   @default("feedback") // feedback, bug, feature_request
+  message   String   @db.Text
+  rating    Int?     // 1-5 stars optional
+  status    String   @default("new") // new, reviewed, resolved, archived
+  adminNote String?  @map("admin_note") @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([orgId])
+  @@index([status])
+  @@map("feedback")
+}
+
+model AiApiKey {
+  id        String   @id @default(cuid())
+  provider  String   // gemini, openai, anthropic, openrouter
+  apiKey    String   @map("api_key") @db.Text  // encrypted
+  label     String?  // e.g. "Production Gemini Key"
+  isActive  Boolean  @default(true) @map("is_active")
+  lastUsed  DateTime? @map("last_used")
+  errorCount Int     @default(0) @map("error_count")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([provider, isActive])
+  @@map("ai_api_keys")
+}
+
+model AiModel {
+  id          String  @id @default(cuid())
+  modelId     String  @map("model_id") // gemini-2.5-flash, gpt-4o, etc.
+  displayName String  @map("display_name")
+  provider    String  // gemini, openai, anthropic
+  enabled     Boolean @default(true)
+  sortOrder   Int     @default(0) @map("sort_order")
+
+  @@index([provider, enabled])
+  @@map("ai_models")
+}
+
+// SHARED global CVE catalog — one row per CVE, shared across all orgs
+// Synced from NVD + CISA KEV on a schedule. Pruned after 90 days if no org tracks it.
+model CveCatalog {
+  id               String   @id @default(cuid())
+  cveId            String   @unique @map("cve_id") // CVE-2024-1234
+  severity         String   // critical, high, medium, low
+  cvssScore        Decimal? @map("cvss_score") @db.Decimal(3, 1)
+  title            String   @db.Text
+  description      String   @db.Text
+  affectedProduct  String?  @map("affected_product")
+  vendor           String?
+  published        DateTime
+  lastModified     DateTime? @map("last_modified")
+  cisaKev          Boolean  @default(false) @map("cisa_kev")
+  exploitAvailable Boolean  @default(false) @map("exploit_available")
+  patchAvailable   Boolean  @default(false) @map("patch_available")
+  source           String   @default("nvd") // nvd, cisa, manual
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  orgTracking OrgCveTracking[]
+
+  @@index([severity])
+  @@index([published])
+  @@index([cisaKev])
+  @@map("cve_catalog")
+}
+
+// PER-ORG tracking — only created when an org reviews/assigns/takes action on a CVE
+// Tiny table: only rows for CVEs that a customer actually interacts with
+model OrgCveTracking {
+  id         String   @id @default(cuid())
+  orgId      String   @map("org_id")
+  cveId      String   @map("cve_id") // references CveCatalog.cveId
+  status     String   @default("new") // new, reviewing, mitigated, not_affected, accepted_risk
+  assignedTo String?  @map("assigned_to")
+  notes      String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  org        Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  cve        CveCatalog   @relation(fields: [cveId], references: [cveId], onDelete: Cascade)
+
+  @@unique([orgId, cveId])
+  @@index([orgId])
+  @@map("org_cve_tracking")
+}
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String    @db.Text
+  content     String    @db.LongText
+  coverImage  String?   @map("cover_image")
+  authorName  String    @map("author_name")
+  authorEmail String    @map("author_email")
+  tags        Json?
+  status      String    @default("draft") // draft, published, archived
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([status, publishedAt])
+  @@index([slug])
+  @@map("blog_posts")
+}

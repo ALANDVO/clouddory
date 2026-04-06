@@ -1,0 +1,7 @@
+RewriteEngine On
+RewriteBase /blog/
+
+# If the request is not for an existing file or directory, serve index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.+)$ /blog/index.html [L]

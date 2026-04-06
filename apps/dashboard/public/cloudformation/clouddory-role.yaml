@@ -1,0 +1,114 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudDory - Cross-account read-only role for cost and usage analysis'
+
+Parameters:
+  ExternalId:
+    Type: String
+    Description: 'External ID provided by CloudDory (found in your CloudDory dashboard)'
+    MinLength: 1
+  CURBucketName:
+    Type: String
+    Description: 'Name of the S3 bucket containing your Cost and Usage Report'
+    Default: ''
+  CURBucketPrefix:
+    Type: String
+    Description: 'S3 prefix/path for the CUR data'
+    Default: 'cur'
+
+Resources:
+  CloudDoryRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CloudDoryReadOnlyRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: 'arn:aws:iam::YOUR_AWS_ACCOUNT_ID:root'  # Replace with your CloudDory deployment's AWS account ID
+            Action: 'sts:AssumeRole'
+            Condition:
+              StringEquals:
+                'sts:ExternalId': !Ref ExternalId
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/job-function/ViewOnlyAccess'
+      Policies:
+        - PolicyName: CloudDoryCostAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: CostExplorerAccess
+                Effect: Allow
+                Action:
+                  - 'ce:GetCostAndUsage'
+                  - 'ce:GetCostForecast'
+                  - 'ce:GetReservationUtilization'
+                  - 'ce:GetReservationPurchaseRecommendation'
+                  - 'ce:GetRightsizingRecommendation'
+                  - 'ce:GetSavingsPlansUtilization'
+                  - 'ce:GetSavingsPlansPurchaseRecommendation'
+                  - 'ce:GetDimensionValues'
+                  - 'ce:GetTags'
+                  - 'ce:ListCostCategoryDefinitions'
+                Resource: '*'
+              - Sid: CURBucketAccess
+                Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                  - 's3:ListBucket'
+                  - 's3:GetBucketLocation'
+                Resource:
+                  - !If
+                    - HasCURBucket
+                    - !Sub 'arn:aws:s3:::${CURBucketName}'
+                    - 'arn:aws:s3:::*'
+                  - !If
+                    - HasCURBucket
+                    - !Sub 'arn:aws:s3:::${CURBucketName}/*'
+                    - 'arn:aws:s3:::*/*'
+              - Sid: CloudWatchAccess
+                Effect: Allow
+                Action:
+                  - 'cloudwatch:GetMetricData'
+                  - 'cloudwatch:GetMetricStatistics'
+                  - 'cloudwatch:ListMetrics'
+                Resource: '*'
+              - Sid: EC2Describe
+                Effect: Allow
+                Action:
+                  - 'ec2:DescribeReservedInstances'
+                  - 'ec2:DescribeReservedInstancesModifications'
+                  - 'ec2:DescribeVolumes'
+                  - 'ec2:DescribeInstances'
+                Resource: '*'
+              - Sid: SavingsPlans
+                Effect: Allow
+                Action:
+                  - 'savingsplans:DescribeSavingsPlans'
+                  - 'savingsplans:DescribeSavingsPlanRates'
+                Resource: '*'
+              - Sid: Organizations
+                Effect: Allow
+                Action:
+                  - 'organizations:ListAccounts'
+                  - 'organizations:ListTagsForResource'
+                  - 'organizations:DescribeOrganization'
+                Resource: '*'
+              - Sid: TagAccess
+                Effect: Allow
+                Action:
+                  - 'tag:GetTagKeys'
+                  - 'tag:GetTagValues'
+                  - 'tag:GetResources'
+                Resource: '*'
+
+Conditions:
+  HasCURBucket: !Not [!Equals [!Ref CURBucketName, '']]
+
+Outputs:
+  RoleArn:
+    Description: 'ARN of the CloudDory read-only role. Copy this into your CloudDory dashboard.'
+    Value: !GetAtt CloudDoryRole.Arn
+  ExternalId:
+    Description: 'External ID used for this connection'
+    Value: !Ref ExternalId
