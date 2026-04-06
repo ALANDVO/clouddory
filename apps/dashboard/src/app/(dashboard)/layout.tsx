@@ -7,6 +7,8 @@ import SessionWrapper from "@/components/layout/SessionWrapper";
 import DashboardShell from "@/components/layout/DashboardShell";
 import { SubscriptionProvider } from "@/components/shared/SubscriptionProvider";
 import FeedbackButton from "@/components/shared/FeedbackButton";
+import SpendCapBanner from "@/components/shared/SpendCapBanner";
+import DemoDataBanner from "@/components/shared/DemoDataBanner";
 
 export default async function DashboardLayout({
   children,
@@ -47,6 +49,8 @@ export default async function DashboardLayout({
     <SessionWrapper>
       <SubscriptionProvider subscriptions={serializedSubs}>
         <DashboardShell orgId={orgId}>
+          <SpendCapBanner />
+          <DemoDataBanner />
           {children}
           <FeedbackButton />
         </DashboardShell>
