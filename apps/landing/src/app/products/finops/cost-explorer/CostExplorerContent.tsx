@@ -392,13 +392,13 @@ export default function CostExplorerContent() {
             </h2>
             <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
               Connect your first cloud account in under 5 minutes. See where every dollar goes.
-              14-day free trial, no credit card required.
+              Free and open source. Self-host or use our hosted demo.
             </p>
             <a
               href="https://dashboard.clouddory.com/register"
               className="btn-glow inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-cyan-500 text-navy-950 font-semibold text-lg hover:bg-cyan-400 transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,229,199,0.3)]"
             >
-              Start Free Trial
+              Get Started Free
             </a>
           </motion.div>
         </div>

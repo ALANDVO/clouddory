@@ -246,13 +246,13 @@ export default function AutomationPage() {
                 href="https://dashboard.clouddory.com/register"
                 className="btn-glow group inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-cyan-500 text-navy-950 font-bold text-lg hover:bg-cyan-400 transition-all duration-300 hover:shadow-[0_0_40px_rgba(0,229,199,0.35)]"
               >
-                Start Free Trial
+                Get Started Free
                 <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
                 </svg>
               </a>
             </div>
-            <p className="mt-5 text-sm text-slate-500">Free 14-day trial. No credit card required.</p>
+            <p className="mt-5 text-sm text-slate-500">Free forever. Open source.</p>
           </motion.div>
         </div>
       </section>

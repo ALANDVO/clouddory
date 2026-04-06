@@ -116,7 +116,7 @@ export default function SecurityContent() {
               href="https://dashboard.clouddory.com/register"
               className="btn-glow group inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-cyan-500 text-navy-950 font-semibold text-base hover:bg-cyan-400 transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,229,199,0.3)]"
             >
-              Start Free Trial
+              Get Started Free
               <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
               </svg>
@@ -282,13 +282,13 @@ export default function SecurityContent() {
               <span className="text-gradient">Secure everything.</span>
             </h2>
             <p className="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
-              Start scanning your cloud infrastructure in minutes. 14-day free trial, no credit card required.
+              Start scanning your cloud infrastructure in minutes. Free and open source. Self-host or use our hosted demo.
             </p>
             <a
               href="https://dashboard.clouddory.com/register"
               className="btn-glow inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-cyan-500 text-navy-950 font-semibold text-lg hover:bg-cyan-400 transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,229,199,0.3)]"
             >
-              Start Free Trial
+              Get Started Free
             </a>
           </motion.div>
         </div>

@@ -65,7 +65,7 @@ export default function Navbar() {
               href="https://dashboard.clouddory.com/register"
               className="btn-glow inline-flex items-center px-5 py-2.5 rounded-lg bg-cyan-500 text-navy-950 text-sm font-semibold hover:bg-cyan-400 transition-colors duration-300"
             >
-              Start Free Trial
+              Get Started Free
             </a>
           </div>
 
@@ -113,7 +113,7 @@ export default function Navbar() {
                   href="https://dashboard.clouddory.com/register"
                   className="inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-cyan-500 text-navy-950 text-sm font-semibold"
                 >
-                  Start Free Trial
+                  Get Started Free
                 </a>
               </div>
             </div>

@@ -575,7 +575,7 @@ export default function VirtualTagsContent() {
                 href="https://dashboard.clouddory.com/register"
                 className="btn-glow inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-cyan-500 text-navy-950 font-semibold text-lg hover:bg-cyan-400 transition-all duration-300 hover:shadow-[0_0_30px_rgba(0,229,199,0.3)]"
               >
-                Start Free Trial
+                Get Started Free
               </a>
               <Link
                 href="/products/finops"

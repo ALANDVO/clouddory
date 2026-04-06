@@ -330,7 +330,7 @@ const crossPlatformFeatures = [
   { title: 'Slack & Jira', description: 'Real-time alerts in Slack. Auto-create Jira tickets from findings and recommendations.', icon: '🔗' },
   { title: 'CSV & API Export', description: 'Export any data set to CSV or pull it via our REST API for custom dashboards and pipelines.', icon: '📊' },
   { title: 'SSO / SAML', description: 'Enterprise single sign-on with SAML 2.0 and OIDC. Connect your existing identity provider.', icon: '🔑' },
-  { title: '14-Day Free Trial', description: 'Full platform access. No credit card required. Cancel anytime.', icon: '🚀' },
+  { title: 'Free & Open Source', description: 'Full platform access. Self-host or use our free hosted demo.', icon: '🚀' },
 ];
 
 /* ---------- Comparison ---------- */
@@ -374,7 +374,7 @@ export default function FeaturesPage() {
                 href="https://dashboard.clouddory.com/register"
                 className="btn-glow group inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-cyan-500 text-navy-950 font-bold text-base hover:bg-cyan-400 transition-all duration-300 hover:shadow-[0_0_40px_rgba(0,229,199,0.35)]"
               >
-                Start Free Trial
+                Get Started Free
                 <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" /></svg>
               </a>
               <Link
@@ -859,21 +859,21 @@ export default function FeaturesPage() {
               See Every Feature in Action
             </h2>
             <p className="mt-5 text-xl text-slate-400 max-w-xl mx-auto">
-              Start your free trial and explore the full platform across all four pillars. No credit card required.
+              Get started for free and explore the full platform across all four pillars. Open source & free to self-host.
             </p>
             <div className="mt-10">
               <a
                 href="https://dashboard.clouddory.com/register"
                 className="btn-glow group inline-flex items-center gap-2 px-10 py-4 rounded-xl bg-cyan-500 text-navy-950 font-bold text-lg hover:bg-cyan-400 transition-all duration-300 hover:shadow-[0_0_40px_rgba(0,229,199,0.35)]"
               >
-                Start Free Trial
+                Get Started Free
                 <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 12h12" />
                 </svg>
               </a>
             </div>
             <p className="mt-5 text-sm text-slate-500">
-              Free 14-day trial. No credit card required.
+              Free forever. Open source.
             </p>
           </motion.div>
         </div>
