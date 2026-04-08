@@ -31,7 +31,7 @@ const roles = [
 ];
 
 function createRow(): InviteRow {
-  return { id: crypto.randomUUID(), email: '', role: 'member' };
+  return { id: Math.random().toString(36).slice(2) + Date.now().toString(36), email: '', role: 'member' };
 }
 
 export default function StepInviteTeam({ orgId, onComplete }: StepInviteTeamProps) {
