@@ -239,3 +239,33 @@ Interested in AI engineering, cloud architecture, or want to collaborate? Reach 
   <a href="https://clouddory.com">clouddory.com</a> &bull;
   <a href="https://github.com/ALANDVO/clouddory">Star on GitHub</a>
 </p>
+
+## Upgrading
+
+When a new version is released, update your installation with one command:
+
+```bash
+cd ~/clouddory
+bash upgrade.sh
+```
+
+The upgrade script will:
+1. **Back up** your database before touching anything
+2. **Pull** the latest code from GitHub
+3. **Install** new dependencies
+4. **Apply** database schema changes (non-destructive — your data is safe)
+5. **Rebuild** and restart the app
+
+If anything goes wrong, rollback instructions are shown at the end.
+
+### Manual upgrade
+
+```bash
+cd ~/clouddory
+git pull origin main
+cd apps/dashboard
+npm install
+npx prisma db push
+npm run build
+# Restart your process (pm2 restart, systemctl restart, etc.)
+```
