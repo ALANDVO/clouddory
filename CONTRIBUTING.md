@@ -58,3 +58,7 @@ Email [alanvo@gmail.com](mailto:alanvo@gmail.com) or open a discussion on GitHub
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
+
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)

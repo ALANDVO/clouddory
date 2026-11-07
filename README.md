@@ -269,3 +269,7 @@ npx prisma db push
 npm run build
 # Restart your process (pm2 restart, systemctl restart, etc.)
 ```
+
+---
+
+Alan Vo · [alanvo.net](https://alanvo.net)
